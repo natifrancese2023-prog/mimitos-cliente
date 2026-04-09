@@ -1294,7 +1294,6 @@ function Footer() {
     </footer>
   );
 }
-
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function CatalogoPublico() {
   const [productos, setProductos] = useState([]);
