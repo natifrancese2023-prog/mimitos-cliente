@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
-const API_URL = "http://localhost:8080/productos/catalogo";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const WA_NUMBER = "5493572436695";
 
 // ─── Constantes Basadas en tu PanelLayout (MISMOS NOMBRES QUE USAMOS ABAJO) ───
@@ -867,7 +867,7 @@ function ProductCard({ producto, delay = 0 }) {
   const [imgError, setImgError] = useState(false);
 
   const variantes = producto.variantes ?? [];
-  const precio = variante ? variante.precio : producto.precio_min;
+  const precio = variante ? variante.precio_venta : producto.precio_min;
 
   return (
     <div className="pana-card" style={{ animationDelay: `${delay}s` }}>
@@ -1306,7 +1306,7 @@ export default function CatalogoPublico() {
         setLoading(true);
         setError(null);
         // Usamos axios sin el prefijo /api, según tu app.use('/productos', ...)
-        const { data } = await axios.get(API_URL);
+        const { data } = await axios.get(`${API_URL}/productos/catalogo`);
         setProductos(data);
       } catch (err) {
         setError(
