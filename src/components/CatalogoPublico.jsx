@@ -1358,7 +1358,7 @@ export default function CatalogoPublico() {
         setLoading(true);
         setError(null);
         // Usamos axios sin el prefijo /api, según tu app.use('/productos', ...)
-        const { data } = await axios.get(`${API_URL}/productos/catalogo?todos=true`);
+        const { data } = await axios.get(`${API_URL}/productos/catalogo`);
         setProductos(data);
       } catch (err) {
         setError(
