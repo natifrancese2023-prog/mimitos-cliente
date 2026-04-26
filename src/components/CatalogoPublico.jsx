@@ -869,8 +869,25 @@ function ProductCard({ producto, delay = 0 }) {
   const variantes = producto.variantes ?? [];
   const precio = variante ? variante.precio_venta : producto.precio_min;
 
+  // ── Lógica de stock ──────────────────────────────────────────────────────────
+  // Si tiene variantes: hay stock si al menos una variante tiene stock > 0
+  // Si no tiene variantes: hay stock si stock_total > 0
+  const hayStock = variantes.length > 0
+    ? variantes.some((v) => (v.stock ?? 0) > 0)
+    : (producto.stock_total ?? producto.stock ?? 0) > 0;
+
+  // Si se seleccionó una variante, mostrar si esa variante tiene stock
+  const varianteConStock = variante ? (variante.stock ?? 0) > 0 : true;
+  const sinStockActual = !hayStock || (variante && !varianteConStock);
+
   return (
-    <div className="pana-card" style={{ animationDelay: `${delay}s` }}>
+    <div
+      className="pana-card"
+      style={{
+        animationDelay: `${delay}s`,
+        opacity: hayStock ? 1 : 0.82,
+      }}
+    >
       {/* Imagen */}
       <div
         style={{
@@ -891,6 +908,7 @@ function ProductCard({ producto, delay = 0 }) {
               height: "100%",
               objectFit: "cover",
               transition: "transform .4s",
+              filter: hayStock ? "none" : "grayscale(30%)",
             }}
             onMouseOver={(e) =>
               (e.currentTarget.style.transform = "scale(1.06)")
@@ -941,6 +959,25 @@ function ProductCard({ producto, delay = 0 }) {
         >
           {producto.categoria}
         </span>
+        {/* Badge sin stock */}
+        {!hayStock && (
+          <span
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              background: "rgba(232,90,90,.9)",
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 800,
+              padding: "4px 12px",
+              borderRadius: 99,
+              letterSpacing: ".3px",
+            }}
+          >
+            Sin stock
+          </span>
+        )}
       </div>
 
       {/* Cuerpo */}
@@ -969,22 +1006,27 @@ function ProductCard({ producto, delay = 0 }) {
           {producto.nombre}
         </h3>
 
-        {/* Variantes */}
+        {/* Variantes — muestra indicador de stock por variante */}
         {variantes.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {variantes.map((v) => (
-              <button
-                key={v.id_variante}
-                className={`chip${variante?.id_variante === v.id_variante ? " on" : ""}`}
-                onClick={() =>
-                  setVariante((prev) =>
-                    prev?.id_variante === v.id_variante ? null : v,
-                  )
-                }
-              >
-                {v.nombre_variante}
-              </button>
-            ))}
+            {variantes.map((v) => {
+              const vSinStock = (v.stock ?? 0) <= 0;
+              return (
+                <button
+                  key={v.id_variante}
+                  className={`chip${variante?.id_variante === v.id_variante ? " on" : ""}`}
+                  onClick={() =>
+                    setVariante((prev) =>
+                      prev?.id_variante === v.id_variante ? null : v,
+                    )
+                  }
+                  style={vSinStock ? { opacity: 0.5, textDecoration: "line-through" } : {}}
+                  title={vSinStock ? "Sin stock" : ""}
+                >
+                  {v.nombre_variante}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -1010,7 +1052,7 @@ function ProductCard({ producto, delay = 0 }) {
             style={{
               fontSize: "1.3rem",
               fontWeight: 900,
-              color: C.texto,
+              color: sinStockActual ? C.textoSuave : C.texto,
               fontFamily: "'Nunito', sans-serif",
             }}
           >
@@ -1018,14 +1060,24 @@ function ProductCard({ producto, delay = 0 }) {
           </span>
         </div>
 
-        {/* WhatsApp */}
+        {/* WhatsApp — siempre se puede consultar, pero el texto cambia */}
         <a
           href={waLink(producto.nombre, variante?.nombre_variante)}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-wa"
+          style={
+            sinStockActual
+              ? {
+                  background: C.textoSuave,
+                  boxShadow: "none",
+                  opacity: 0.75,
+                }
+              : {}
+          }
         >
-          <IcoWA /> Consultar por WhatsApp
+          <IcoWA />
+          {sinStockActual ? "Consultar disponibilidad" : "Consultar por WhatsApp"}
         </a>
       </div>
     </div>
@@ -1306,7 +1358,7 @@ export default function CatalogoPublico() {
         setLoading(true);
         setError(null);
         // Usamos axios sin el prefijo /api, según tu app.use('/productos', ...)
-        const { data } = await axios.get(`${API_URL}/productos/catalogo`);
+        const { data } = await axios.get(`${API_URL}/productos/catalogo?todos=true`);
         setProductos(data);
       } catch (err) {
         setError(
