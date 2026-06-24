@@ -1,25 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { C, GLOBAL_CSS } from "./styles";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-const WA_NUMBER = "5493572436695";
-
-// ─── Constantes Basadas en tu PanelLayout (MISMOS NOMBRES QUE USAMOS ABAJO) ───
-const C = {
-  amarillo: "#FFF0A0",
-  amarilloBorde: "#F5D000",
-  naranja: "#E8835A",
-  naranjaOscuro: "#C9603A",
-  blanco: "#FFFDF5",
-  fondoPanel: "#FAF6EE",
-  texto: "#5A4A3A",
-  textoSuave: "#9A8A7A",
-  borde: "#EDE8DF",
-  green500: "#22c55e", // Mantenemos verde para WA
-  green600: "#16a34a",
-  white: "#ffffff",
-};
+const WA_NUMBER = "5493572440988";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const waLink = (nombre, variante) => {
@@ -36,129 +21,6 @@ const fmt = (v) =>
   }).format(v);
 
 // ─── Estilos globales inyectados una sola vez ─────────────────────────────────
-const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;500;600&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Nunito', sans-serif; background:${C.fondoPanel}; color:${C.texto}; }
-  img  { display:block; max-width:100%; }
-  a    { text-decoration:none; }
-  button { cursor:pointer; font-family:inherit; }
-  select { font-family:inherit; }
-
-  @keyframes spin    { to { transform:rotate(360deg); } }
-  @keyframes fadeUp  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes pulse   { 0%,100%{opacity:.35} 50%{opacity:.8} }
-  @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
-
-  .pana-card {
-    background:${C.blanco};
-    border-radius:20px;
-    border:1.5px solid ${C.borde};
-    box-shadow:0 1px 6px rgba(90,74,58,.08);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    transition:transform .25s,box-shadow .25s;
-    animation:fadeUp .45s ease both;
-  }
-  .pana-card:hover { transform:translateY(-4px); border-color:${C.amarilloBorde}; box-shadow:0 10px 32px rgba(245,208,0,.18); }
-
-  .chip {
-    border:1.5px solid ${C.borde};
-    background:#fff;
-    color:${C.textoSuave};
-    border-radius:99px;
-    padding:4px 13px;
-    font-size:12px;
-    font-weight:600;
-    cursor:pointer;
-    transition:background .15s,color .15s,transform .12s;
-  }
-  .chip:hover { background:${C.amarillo}; color:${C.texto}; }
-  .chip.on    { background:${C.naranja}; color:${C.white}; border-color:${C.naranja}; transform:scale(1.08); }
-
-  .btn-wa {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    background:${C.green500}; color:${C.white};
-    font-weight:700; font-size:14px;
-    padding:11px 16px; border-radius:14px; border:none;
-    text-decoration:none; cursor:pointer;
-    transition:background .15s,transform .1s;
-    box-shadow:0 2px 10px rgba(34,197,94,.25);
-  }
-  .btn-wa:hover  { background:${C.green600}; }
-  .btn-wa:active { transform:scale(.97); }
-
-  .nav-link {
-    padding:8px 16px; border-radius:12px;
-    font-size:14px; font-weight:600;
-    color:${C.textoSuave}; background:transparent; border:none; cursor:pointer;
-    transition:color .15s,background .15s;
-  }
-  .nav-link:hover { color:${C.naranja}; background:${C.amarillo}; }
-
-  .valor-card {
-    background:${C.white}; border:1.5px solid ${C.borde}; border-radius:18px;
-    padding:22px; display:flex; gap:16px;
-    box-shadow:0 1px 4px rgba(0,0,0,.04);
-    transition:transform .2s,box-shadow .2s;
-  }
-  .valor-card:hover { transform:translateY(-2px); border-color:${C.amarilloBorde}; box-shadow:0 6px 20px rgba(245,208,0,.12); }
-
-  .input-search {
-    width:100%; padding:12px 14px 12px 42px;
-    border-radius:14px; border:1.5px solid ${C.borde};
-    background:#fff; font-size:14px; color:${C.texto}; outline:none;
-    transition:border-color .2s,box-shadow .2s;
-  }
-  .input-search:focus { border-color:${C.naranja}; box-shadow:0 0 0 3px rgba(232,131,90,.15); }
-
-  .sel-cat {
-    padding:12px 38px 12px 14px;
-    border-radius:14px; border:1.5px solid ${C.borde};
-    background:#fff; font-size:14px; font-weight:600; color:${C.texto};
-    outline:none; appearance:none; -webkit-appearance:none; cursor:pointer;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23E8835A'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 10px center; background-size:16px;
-    transition:border-color .2s,box-shadow .2s;
-  }
-  .sel-cat:focus { border-color:${C.naranja}; box-shadow:0 0 0 3px rgba(232,131,90,.15); }
-
-  .badge {
-    display:inline-block; background:${C.amarillo}; color:${C.naranjaOscuro};
-    font-size:12px; font-weight:700; padding:5px 15px;
-    border-radius:99px; letter-spacing:.3px; font-family:'Baloo 2', cursive;
-  }
-  
-  .hero-h1 {
-    font-family: 'Baloo 2', cursive;
-    color: ${C.naranja};
-    font-weight: 800;
-  }
-
-  /* ── Responsive ── */
-  @media(max-width:640px){
-    .hero-h1   { font-size:2.3rem !important; }
-    .cols-2    { grid-template-columns:1fr !important; }
-    .filtros   { flex-direction:column !important; }
-    .nav-desk  { display:none !important; }
-    .ham       { display:flex !important; }
-    .prod-grid { grid-template-columns:1fr !important; }
-  }
-  @media(min-width:641px) and (max-width:1023px){
-    .prod-grid { grid-template-columns:repeat(2,1fr) !important; }
-  }
-  @media(min-width:1024px){
-    .prod-grid { grid-template-columns:repeat(3,1fr) !important; }
-    .ham       { display:none !important; }
-  }
-  @media(min-width:1280px){
-    .prod-grid { grid-template-columns:repeat(4,1fr) !important; }
-  }
-`;
-
 function GlobalStyle() {
   useEffect(() => {
     const ID = "pana-styles";
@@ -228,10 +90,10 @@ function Navbar() {
         right: 0,
         zIndex: 100,
         background: scrolled
-          ? "rgba(255,253,245,.97)"
-          : "rgba(255,253,245,.82)",
+          ? "rgba(253,245,251,.97)"
+          : "rgba(253,245,251,.82)",
         backdropFilter: "blur(10px)",
-        boxShadow: scrolled ? "0 2px 16px rgba(90,74,58,.08)" : "none",
+        boxShadow: scrolled ? "0 2px 16px rgba(74,53,80,.08)" : "none",
         borderBottom: `1px solid ${scrolled ? C.borde : "transparent"}`,
         transition: "all .3s",
       }}
@@ -268,13 +130,13 @@ function Navbar() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: `1.5px solid ${C.amarilloBorde}`,
-              boxShadow: "0 2px 10px rgba(232,131,90,0.15)",
+              border: `1.5px solid ${C.rosa}55`,
+              boxShadow: "0 2px 10px rgba(244,125,179,0.18)",
             }}
           >
             <img
               src="/logo.jpeg"
-              alt="Mimitos Logo"
+              alt="Mundo Bebe Logo"
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
@@ -288,13 +150,13 @@ function Navbar() {
                 color: C.texto,
               }}
             >
-              Mimitos
+              Mundo Bebe
             </span>
             <span
               style={{
                 display: "block",
                 fontSize: 12,
-                color: C.naranja,
+                color: C.teal,
                 fontWeight: 600,
               }}
             >
@@ -423,7 +285,7 @@ function Hero() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg,${C.fondoPanel} 0%,${C.blanco} 55%,#fffdec 100%)`,
+        background: `linear-gradient(135deg,${C.fondoPanel} 0%,${C.blanco} 55%,#fff0f8 100%)`,
         position: "relative",
         overflow: "hidden",
         padding: "110px 20px 70px",
@@ -437,7 +299,7 @@ function Hero() {
           right: -80,
           width: 380,
           height: 380,
-          background: "rgba(255,240,160,.3)",
+          background: "rgba(244,125,179,.18)",
           borderRadius: "50%",
           filter: "blur(60px)",
           pointerEvents: "none",
@@ -450,7 +312,7 @@ function Hero() {
           left: -80,
           width: 360,
           height: 360,
-          background: "rgba(232,131,90,.15)",
+          background: "rgba(91,200,192,.13)",
           borderRadius: "50%",
           filter: "blur(60px)",
           pointerEvents: "none",
@@ -470,7 +332,7 @@ function Hero() {
             top: p.t,
             left: p.l,
             fontSize: "1.3rem",
-            color: C.amarilloBorde,
+            color: C.rosa,
             animation: `pulse 3.2s ease-in-out ${i * 0.6}s infinite`,
           }}
         >
@@ -496,16 +358,16 @@ function Hero() {
             gap: 7,
             background: "rgba(255,255,255,.85)",
             border: `1px solid ${C.borde}`,
-            color: C.naranja,
+            color: C.rosa,
             fontSize: 13,
             fontWeight: 700,
             padding: "7px 18px",
             borderRadius: 99,
             marginBottom: 32,
-            boxShadow: "0 2px 12px rgba(90,74,58,.05)",
+            boxShadow: "0 2px 12px rgba(74,53,80,.05)",
           }}
         >
-          <IcoHeart size={13} color={C.naranja} /> Todo para tu bebé, con amor
+          <IcoHeart size={13} color={C.rosa} /> Todo para tu bebé, con amor
         </div>
 
         <h1
@@ -518,7 +380,7 @@ function Hero() {
           }}
         >
           Lo mejor para{" "}
-          <span style={{ color: C.naranjaOscuro, position: "relative" }}>
+          <span style={{ color: C.rosaOscuro, position: "relative" }}>
             tu bebé
             <svg
               style={{
@@ -532,7 +394,7 @@ function Hero() {
             >
               <path
                 d="M0 6 Q50 1 100 5 Q150 9 200 4"
-                stroke={C.amarilloBorde}
+                stroke={C.teal}
                 strokeWidth="3"
                 strokeLinecap="round"
               />
@@ -564,7 +426,7 @@ function Hero() {
           <button
             onClick={() => goto("catalogo")}
             style={{
-              background: C.naranja,
+              background: C.rosa,
               color: C.white,
               fontWeight: 800,
               fontSize: 15,
@@ -572,13 +434,13 @@ function Hero() {
               borderRadius: 16,
               border: "none",
               cursor: "pointer",
-              boxShadow: "0 4px 18px rgba(232,131,90,.35)",
+              boxShadow: "0 4px 18px rgba(244,125,179,.35)",
               transition: "background .15s",
             }}
             onMouseOver={(e) =>
-              (e.currentTarget.style.background = C.naranjaOscuro)
+              (e.currentTarget.style.background = C.rosaOscuro)
             }
-            onMouseOut={(e) => (e.currentTarget.style.background = C.naranja)}
+            onMouseOut={(e) => (e.currentTarget.style.background = C.rosa)}
           >
             Ver Catálogo
           </button>
@@ -632,7 +494,7 @@ function Hero() {
                 style={{
                   fontSize: "1.6rem",
                   fontWeight: 900,
-                  color: C.naranja,
+                  color: C.teal,
                 }}
               >
                 {s.n}
@@ -654,6 +516,7 @@ function Hero() {
     </section>
   );
 }
+
 // ─── Quiénes Somos ────────────────────────────────────────────────────────────
 function QuienesSomos() {
   const vals = [
@@ -688,23 +551,23 @@ function QuienesSomos() {
       }}
     >
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        
+
         {/* LOGO PRINCIPAL CENTRADO */}
         <div style={{ textAlign: "center", marginBottom: 30, animation: "fadeUp 0.8s ease both" }}>
-          <div style={{ 
-            width: 130, 
-            height: 130, 
-            margin: "0 auto", 
-            borderRadius: "50%", 
-            overflow: "hidden", 
+          <div style={{
+            width: 130,
+            height: 130,
+            margin: "0 auto",
+            borderRadius: "50%",
+            overflow: "hidden",
             border: `5px solid white`,
-            boxShadow: "0 10px 30px rgba(232,131,90,0.15)",
+            boxShadow: "0 10px 30px rgba(244,125,179,0.18)",
             background: "white"
           }}>
-            <img 
-              src="/logo.jpeg" 
-              alt="Mimitos Pañalera" 
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+            <img
+              src="/logo.jpeg"
+              alt="Mundo Bebe Pañalera"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
         </div>
@@ -719,10 +582,10 @@ function QuienesSomos() {
               fontWeight: 900,
               color: C.texto,
               marginBottom: 16,
-              fontFamily: "'Baloo 2', cursive", // Cambiado a Baloo 2 para ser coherente
+              fontFamily: "'Baloo 2', cursive",
             }}
           >
-            Quiénes <span style={{ color: C.naranja }}>Somos</span>
+            Quiénes <span style={{ color: C.rosa }}>Somos</span>
           </h2>
           <p
             style={{
@@ -745,7 +608,7 @@ function QuienesSomos() {
             borderRadius: 24,
             padding: "36px 32px",
             border: `1px solid ${C.borde}`,
-            boxShadow: "0 2px 20px rgba(90,74,58,.05)",
+            boxShadow: "0 2px 20px rgba(74,53,80,.05)",
             display: "flex",
             flexWrap: "wrap",
             gap: 26,
@@ -762,13 +625,13 @@ function QuienesSomos() {
               right: 0,
               width: 160,
               height: 160,
-              background: C.amarillo,
+              background: C.rosaClaro,
               borderBottomLeftRadius: "100%",
-              opacity: 0.4,
+              opacity: 0.5,
             }}
           />
-          
-          {/* LOGO EN LUGAR DEL EMOJI BEBÉ */}
+
+          {/* LOGO EN TARJETA */}
           <div
             style={{
               flexShrink: 0,
@@ -776,7 +639,7 @@ function QuienesSomos() {
               height: 90,
               background: "white",
               borderRadius: 22,
-              border: `1.5px solid ${C.amarilloBorde}`,
+              border: `1.5px solid ${C.rosa}44`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -786,10 +649,10 @@ function QuienesSomos() {
               zIndex: 1,
             }}
           >
-            <img 
-              src="/logo.jpeg" 
-              alt="Logo" 
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+            <img
+              src="/logo.jpeg"
+              alt="Logo"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
 
@@ -869,14 +732,10 @@ function ProductCard({ producto, delay = 0 }) {
   const variantes = producto.variantes ?? [];
   const precio = variante ? variante.precio_venta : producto.precio_min;
 
-  // ── Lógica de stock ──────────────────────────────────────────────────────────
-  // Si tiene variantes: hay stock si al menos una variante tiene stock > 0
-  // Si no tiene variantes: hay stock si stock_total > 0
   const hayStock = variantes.length > 0
     ? variantes.some((v) => (v.stock ?? 0) > 0)
     : (producto.stock_total ?? producto.stock ?? 0) > 0;
 
-  // Si se seleccionó una variante, mostrar si esa variante tiene stock
   const varianteConStock = variante ? (variante.stock ?? 0) > 0 : true;
   const sinStockActual = !hayStock || (variante && !varianteConStock);
 
@@ -948,7 +807,7 @@ function ProductCard({ producto, delay = 0 }) {
             top: 10,
             left: 10,
             background: "rgba(255,255,255,.92)",
-            color: C.naranjaOscuro,
+            color: C.lila,
             fontSize: 11,
             fontWeight: 700,
             padding: "4px 12px",
@@ -1006,7 +865,7 @@ function ProductCard({ producto, delay = 0 }) {
           {producto.nombre}
         </h3>
 
-        {/* Variantes — muestra indicador de stock por variante */}
+        {/* Variantes */}
         {variantes.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {variantes.map((v) => {
@@ -1060,7 +919,7 @@ function ProductCard({ producto, delay = 0 }) {
           </span>
         </div>
 
-        {/* WhatsApp — siempre se puede consultar, pero el texto cambia */}
+        {/* WhatsApp */}
         <a
           href={waLink(producto.nombre, variante?.nombre_variante)}
           target="_blank"
@@ -1200,7 +1059,7 @@ function Catalogo({ productos, loading, error }) {
                 width: 44,
                 height: 44,
                 border: `4px solid ${C.borde}`,
-                borderTopColor: C.naranja,
+                borderTopColor: C.rosa,
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
                 margin: "0 auto 16px",
@@ -1311,7 +1170,7 @@ function Footer() {
                 fontSize: 18,
               }}
             >
-              Mimitos
+              Mundo Bebe
             </p>
             <p style={{ fontSize: 11, color: C.textoSuave }}>
               Pañalera & Bebés
@@ -1325,7 +1184,7 @@ function Footer() {
             fontFamily: "'Nunito', sans-serif",
           }}
         >
-          © {new Date().getFullYear()} Mimitos. Laguna Larga, Córdoba.
+          © {new Date().getFullYear()} Mundo Bebe. Laguna Larga, Córdoba.
         </p>
         <a
           href={`https://wa.me/${WA_NUMBER}`}
@@ -1340,12 +1199,13 @@ function Footer() {
             fontSize: 14,
           }}
         >
-          <IcoWA /> +54 9 3572 436695
+          <IcoWA /> +54 9 (3572) 440988 - 3572 438399
         </a>
       </div>
     </footer>
   );
 }
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 export default function CatalogoPublico() {
   const [productos, setProductos] = useState([]);
@@ -1357,7 +1217,6 @@ export default function CatalogoPublico() {
       try {
         setLoading(true);
         setError(null);
-        // Usamos axios sin el prefijo /api, según tu app.use('/productos', ...)
         const { data } = await axios.get(`${API_URL}/productos/catalogo`);
         setProductos(data);
       } catch (err) {
